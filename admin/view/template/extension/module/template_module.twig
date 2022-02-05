@@ -1,0 +1,177 @@
+{{ header }}{{ column_left }}
+
+<div id="content">
+  <form action="{{ action }}" method="post" enctype="multipart/form-data" id="form-article" class="form-horizontal">
+    <div class="page-header">
+      <div class="container-fluid">
+        <div class="pull-right">
+          <button type="submit" form="form-module" data-toggle="tooltip" title="{{ button_save }}" class="btn btn-primary"><i class="fa fa-save" style="color: white"></i></button>
+          <a href="{{ cancel }}" data-toggle="tooltip" title="{{ button_cancel }}" class="btn btn-default"><i class="fa fa-reply"></i></a></div>
+        <h1>{{ heading_title }}</h1>
+        <ul class="breadcrumb">
+          {% for breadcrumb in breadcrumbs %}
+          <li><a href="{{ breadcrumb.href }}">{{ breadcrumb.text }}</a></li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+    <div class="container-fluid">
+      {% if error_warning %}
+      <div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> {{ error_warning }}
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+      </div>
+      {% endif %}
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title"><i class="fa fa-pencil"></i> {{ text_edit }}</h3>
+        </div>
+        <div class="panel-body">
+
+          <div id="form-module" class="form-horizontal">
+
+            <div class="form-group">
+              <label class="col-sm-2 control-label" for="input-status">{{ entry_status }}</label>
+              <div class="col-sm-10">
+                <select name="status" id="input-status" class="form-control">
+                  {% if module_rozetka_yml_status %}
+                  <option value="1" selected="selected">{{ text_enabled }}</option>
+                  <option value="0">{{ text_disabled }}</option>
+                  {% else %}
+                  <option value="1">{{ text_enabled }}</option>
+                  <option value="0" selected="selected">{{ text_disabled }}</option>
+                  {% endif %}
+                </select>
+
+  
+              </div>
+
+
+
+            </div>
+              {% verbatim %}
+
+              <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+              <link href="https://unpkg.com/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+              <link href="https://unpkg.com/@mdi/font@5.x/css/materialdesignicons.min.css" rel="stylesheet">
+
+
+                <div id="app" data-app>
+
+                  <v-dialog
+                    v-model="showDialog"
+                    max-width="320"
+                  >
+                    <v-card>
+                      <v-card-title class="text-h5"  style="white-space: nowrap;">
+                        {{ dialogTitle }}
+                      </v-card-title>
+                      <v-card-text>
+                        {{ dialogContent }} 
+                      </v-card-text>
+                      <v-card-text>
+                        {{ dialogSubject ? "'" + dialogSubject + "'" : ""  }}
+                      </v-card-text>
+                      <v-card-actions>
+                        <v-spacer></v-spacer>
+                        <v-btn
+                          text
+                          @click="closeDialog"
+                        >
+                          Cancel
+                        </v-btn>
+                        <v-btn
+                          color="primary"
+                          text
+                          @click="action"
+                        >
+                          OK
+                        </v-btn>
+                      </v-card-actions>
+                    </v-card>
+                  </v-dialog>
+
+
+                  <div class="form-group">
+                    <label class="col-sm-2 control-label" for="input-limit">Categories</label>
+                    <div class="col-sm-10">
+                      <v-autocomplete dense id="input-limit" class="form-control" 
+                        autofocus
+                        return-object
+                        v-model="currentCategoryID"
+                        :items="searchCategories"
+                        item-text="name"
+                        item-value="category_id"
+                        @input="e => setCurrentCategory(e)"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="table-responsive">
+                  
+                    <span>{{ message }}</span>
+
+                  </div>
+                </div>
+              {% endverbatim  %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+<script src="https://unpkg.com/vue@2.x/dist/vue.js"></script>
+<script src="https://unpkg.com/vuetify@2.x/dist/vuetify.js"></script>
+<script>
+const userToken = '{{ user_token }}';
+
+const vm = new Vue({
+  data() {
+    return {
+      message: "",
+      searchCategories:[],
+      dialogTitle: null,
+      dialogContent: null,
+      dialogSubject: null,
+      action: ()=>{},
+      showDialog: false,
+      categories_json: '',
+    }
+  },
+  mounted() {
+    this.init();
+  },
+  methods: {
+    init(){
+      this.message = 'Loading...'
+
+      axios.get('{{ get_all_categories_url }}')
+      .then(response => {
+            this.message = response.data.message
+            this.searchCategories = response.data
+            console.log("init searchCategories", response.data);
+      })
+      .catch(error => {
+        this.message = 'Error! Could not reach the API. ' + error
+      })
+    },
+    closeDialog(){
+      this.showDialog = false;
+    },
+    categoryDeleteAlert(category_id){
+      this.action = () => {
+        this.deleteCategory(category_id);
+        this.showDialog = false;
+      };
+      this.dialogTitle = "Категория будет удалена";
+      this.dialogContent = "";
+      this.dialogSubject = "";
+      this.showDialog = true;
+    },
+  },
+  vuetify: new Vuetify(),
+  el: '#app'
+})  
+</script>
+
+{{ footer }}
